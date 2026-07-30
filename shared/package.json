@@ -1,0 +1,26 @@
+{
+  "name": "@bardan/shared",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./dist/validation/index.js",
+  "types": "./dist/validation/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/validation/index.d.ts",
+      "default": "./dist/validation/index.js"
+    },
+    "./validation/*": {
+      "types": "./dist/validation/*.d.ts",
+      "default": "./dist/validation/*.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4"
+  }
+}

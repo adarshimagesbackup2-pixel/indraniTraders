@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: bardan-erp
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Set these two in the Render dashboard (Environment tab) instead of
+      # committing them here — "sync: false" makes Render prompt for a value
+      # instead of storing it in this file / your git history.
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        sync: false
+      - key: JWT_REFRESH_SECRET
+        sync: false
+      # CLIENT_ORIGIN is only needed if you ever split the client into a
+      # separate Render static site. Since this Blueprint serves the client
+      # from the same service, it's safe to leave unset.

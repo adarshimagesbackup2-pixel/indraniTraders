@@ -1,0 +1,293 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  STAFF
+}
+
+enum PricingType {
+  PER_BAG
+  LUMPSUM
+}
+
+enum EwayStatus {
+  NOT_REQUIRED
+  PENDING
+  GENERATED
+}
+
+enum LedgerType {
+  DEBIT
+  CREDIT
+}
+
+enum PaymentMode {
+  CASH
+  UPI
+  BANK_TRANSFER
+  CHEQUE
+}
+
+enum StockAction {
+  MANUFACTURING_ADDITION
+  PURCHASE_ADDITION
+  ORDER_DEDUCTION
+  MANUAL_CORRECTION
+}
+
+enum NumberingMode {
+  AUTO
+  MANUAL
+}
+
+enum TransportMode {
+  ROAD
+  RAIL
+  AIR
+  SHIP
+}
+
+enum TransportationReason {
+  SUPPLY
+  EXPORT
+  JOB_WORK
+  SKD_CKD
+  RECIPIENT_NOT_KNOWN
+  LINE_SALES
+  SALES_RETURN
+  EXHIBITION_FAIRS
+  FOR_OWN_USE
+  OTHERS
+}
+
+enum OrderStatus {
+  ACTIVE
+  CANCELLED
+}
+
+model User {
+  id                 String   @id @default(uuid())
+  name               String
+  phone              String   @unique
+  passwordHash       String
+  role               Role     @default(STAFF)
+  mustChangePassword Boolean  @default(true)
+  createdAt          DateTime @default(now())
+}
+
+model Customer {
+  id                 String        @id @default(uuid())
+  name               String
+  phone              String
+  address            String
+  gstin              String?
+  trademarkName      String?
+  openingBalance     Decimal       @default(0.00) @db.Decimal(12, 2)
+  openingBalanceType LedgerType    @default(DEBIT)
+  creditLimit        Decimal       @default(0.00) @db.Decimal(12, 2)
+  isActive           Boolean       @default(true)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  orders             Order[]
+  ledgerEntries      KhataLedger[]
+  reminderLogs       ReminderLog[]
+
+  stateCode       String?
+  pincode         String?
+  shipToAddress   String?
+  shipToGstin     String?
+  shipToPincode   String?
+  shipToStateCode String?
+
+  isBlacklisted   Boolean   @default(false)
+  blacklistReason String?
+  blacklistedAt   DateTime?
+  blacklistedById String?
+
+  @@index([phone])
+  @@index([name])
+}
+
+model BagMaster {
+  id                String          @id @default(uuid())
+  bagType           String          @unique
+  defaultRate       Decimal         @db.Decimal(10, 2)
+  currentStock      Int             @default(0)
+  lowStockThreshold Int             @default(2000)
+  hsnCode           String?         @default("6305")
+  isActive          Boolean         @default(true)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  orderItems        OrderItem[]
+  stockLogs         StockAuditLog[]
+
+  gstRate       Decimal @default(5.00) @db.Decimal(5, 2)
+  unitOfMeasure String  @default("BAG")
+}
+
+model Transport {
+  id          String   @id @default(uuid())
+  vehicleNo   String
+  driverName  String
+  driverPhone String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  orders      Order[]
+}
+
+model Order {
+  id             String        @id @default(uuid())
+  challanNo      String        @unique
+  customerId     String
+  customer       Customer      @relation(fields: [customerId], references: [id])
+  transportId    String
+  transport      Transport     @relation(fields: [transportId], references: [id])
+  items          OrderItem[]
+  subtotal       Decimal       @db.Decimal(12, 2)
+  gstEnabled     Boolean       @default(false)
+  cgstAmount     Decimal       @default(0.00) @db.Decimal(12, 2)
+  sgstAmount     Decimal       @default(0.00) @db.Decimal(12, 2)
+  igstAmount     Decimal       @default(0.00) @db.Decimal(12, 2)
+  totalAmount    Decimal       @db.Decimal(12, 2)
+  ewayBillStatus EwayStatus    @default(NOT_REQUIRED)
+  ewayBillNo     String?
+  createdById    String
+  createdAt      DateTime      @default(now())
+  ledgerEntries  KhataLedger[]
+
+  customerBillNo String?
+
+  transportationReason TransportationReason @default(SUPPLY)
+  transportMode         TransportMode        @default(ROAD)
+  transportDocNo       String?
+  transportDocDate     DateTime?
+  transDistanceKm      Int?
+
+  status        OrderStatus @default(ACTIVE)
+  editedAt      DateTime?
+  editedById    String?
+  editReason    String?
+  cancelledAt   DateTime?
+  cancelledById String?
+  cancelReason  String?
+
+  @@index([customerId])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id          String      @id @default(uuid())
+  orderId     String
+  order       Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  bagTypeId   String
+  bagType     BagMaster   @relation(fields: [bagTypeId], references: [id])
+  quantity    Int
+  pricingType PricingType
+  ratePerBag  Decimal?    @db.Decimal(10, 2)
+  lineTotal   Decimal     @db.Decimal(12, 2)
+
+  gstRate    Decimal @default(0.00) @db.Decimal(5, 2)
+  cgstAmount Decimal @default(0.00) @db.Decimal(12, 2)
+  sgstAmount Decimal @default(0.00) @db.Decimal(12, 2)
+  igstAmount Decimal @default(0.00) @db.Decimal(12, 2)
+}
+
+model KhataLedger {
+  id             String       @id @default(uuid())
+  customerId     String
+  customer       Customer     @relation(fields: [customerId], references: [id])
+  orderId        String?
+  order          Order?       @relation(fields: [orderId], references: [id])
+  type           LedgerType
+  amount         Decimal      @db.Decimal(12, 2)
+  paymentMode    PaymentMode?
+  referenceNo    String?
+  notes          String?
+  runningBalance Decimal      @db.Decimal(12, 2)
+  date           DateTime     @default(now())
+  createdById    String
+
+  isCorrection    Boolean @default(false)
+  correctionForId String?
+
+  @@index([customerId, date])
+}
+
+model StockAuditLog {
+  id           String      @id @default(uuid())
+  bagTypeId    String
+  bagType      BagMaster   @relation(fields: [bagTypeId], references: [id])
+  type         StockAction
+  quantity     Int
+  balanceAfter Int
+  notes        String?
+  createdById  String
+  createdAt    DateTime    @default(now())
+
+  @@index([bagTypeId, createdAt])
+}
+
+model ReminderLog {
+  id            String   @id @default(uuid())
+  customerId    String
+  customer      Customer @relation(fields: [customerId], references: [id])
+  balanceAtSend Decimal  @db.Decimal(12, 2)
+  sentAt        DateTime @default(now())
+  channel       String   @default("whatsapp")
+}
+
+model BusinessSettings {
+  id                 String   @id @default("singleton")
+  businessName       String
+  businessGstin      String?
+  businessAddress    String
+  businessPhone      String
+  whatsappTemplate   String   @default("Dear {customer_name}, your pending balance for Bardan Onion Bags as of {current_date} is Rs.{balance_amount}. Kindly settle this at your earliest convenience. Thank you - {business_name}.")
+  gstEnabledDefault  Boolean  @default(false)
+  cgstPercent        Decimal  @default(2.5) @db.Decimal(5, 2)
+  sgstPercent        Decimal  @default(2.5) @db.Decimal(5, 2)
+  ewayThreshold      Decimal  @default(50000.00) @db.Decimal(12, 2)
+  reminderDayOfMonth Int      @default(1)
+  updatedAt          DateTime @updatedAt
+
+  businessPincode              String?
+  businessStateCode            String?
+  businessAddressLine1         String?
+  businessAddressLine2         String?
+  businessPlace                String?
+  turnoverAboveFiveCr          Boolean              @default(false)
+  defaultTransportMode         TransportMode        @default(ROAD)
+  defaultTransportationReason  TransportationReason @default(SUPPLY)
+  ewayThresholdIntrastate      Decimal              @default(100000.00) @db.Decimal(12, 2)
+  ewayThresholdInterstate      Decimal              @default(50000.00) @db.Decimal(12, 2)
+
+  numberingMode NumberingMode @default(AUTO)
+
+  financialYearStartMonth Int @default(4)
+}
+
+model MenuLabel {
+  id          String  @id @default(uuid())
+  key         String  @unique
+  customLabel String?
+}
+
+model AuditLog {
+  id            String   @id @default(uuid())
+  action        String
+  entityType    String
+  entityId      String
+  performedById String
+  performedAt   DateTime @default(now())
+  details       String?
+
+  @@index([entityType, entityId])
+  @@index([performedAt])
+}
