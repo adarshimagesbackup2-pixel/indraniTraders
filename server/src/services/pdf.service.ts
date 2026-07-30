@@ -133,13 +133,13 @@ export async function generateStatementPdf({ customerId, from, to }: StatementPa
 
   const browser = await puppeteer.launch({
     args: chromium.args,
-    defaultViewport: chromium.defaultViewport,
+    defaultViewport: { width: 1240, height: 1754 }, // A4 @ ~150dpi portrait,
     executablePath: await chromium.executablePath(),
     headless: true,
   });
   try {
     const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: "networkidle0" });
+    await page.setContent(html, { waitUntil: "load" });;
     const pdfBuffer = await page.pdf({ format: "A4", printBackground: true });
     return Buffer.from(pdfBuffer);
   } finally {
