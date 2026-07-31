@@ -76,16 +76,25 @@ export function useUpdateCustomer() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["customers"] }),
   });
 }
-
 export function useDeleteCustomer() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      await api.delete(`/customers/${id}`);
+      const { data } = await api.delete(`/customers/${id}`);
+      return data.data as { archived: boolean; hadLedgerHistory: boolean };
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["customers"] }),
   });
 }
+// export function useDeleteCustomer() {
+//   const qc = useQueryClient();
+//   return useMutation({
+//     mutationFn: async (id: string) => {
+//       await api.delete(`/customers/${id}`);
+//     },
+//     onSuccess: () => qc.invalidateQueries({ queryKey: ["customers"] }),
+//   });
+// }
 
 // §4 — blacklist toggle
 export function useSetBlacklist() {
