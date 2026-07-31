@@ -17,7 +17,8 @@ import { Table, type Column } from "../components/ui/Table";
 import { PrintableStatement } from "../components/PrintableStatement";
 import { RecordPaymentModal } from "../components/RecordPaymentModal";
 import { formatBalance, formatCurrency, formatDate } from "../lib/format";
-import { showToast } from "../components/ui/Toast";
+// import { showToast } from "../components/ui/Toast";
+import { showToast, extractApiErrorMessage } from "../components/ui/Toast";
 import type { LedgerEntry } from "../hooks/useKhata";
 
 // §7.5 — export the visible ledger entries to CSV, for the customer's own accounting / CA
