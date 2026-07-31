@@ -119,18 +119,26 @@ export async function updateCustomer(id: string, input: CustomerUpdateInput, upd
     },
   });
 }
-
 export async function deleteCustomer(id: string) {
   const existing = await prisma.customer.findUnique({ where: { id } });
   if (!existing) throw new ApiError(404, "Customer not found");
 
-  const ledgerCount = await prisma.khataLedger.count({ where: { customerId: id } });
-  if (ledgerCount > 0) {
-    throw new ApiError(422, "This customer has ledger history and cannot be deleted. They have been archived instead.");
-  }
+  await prisma.customer.update({ where: { id }, data: { isActive: false } });
 
-  return prisma.customer.update({ where: { id }, data: { isActive: false } });
+  const ledgerCount = await prisma.khataLedger.count({ where: { customerId: id } });
+  return { archived: true, hadLedgerHistory: ledgerCount > 0 };
 }
+// export async function deleteCustomer(id: string) {
+//   const existing = await prisma.customer.findUnique({ where: { id } });
+//   if (!existing) throw new ApiError(404, "Customer not found");
+
+//   const ledgerCount = await prisma.khataLedger.count({ where: { customerId: id } });
+//   if (ledgerCount > 0) {
+//     throw new ApiError(422, "This customer has ledger history and cannot be deleted. They have been archived instead.");
+//   }
+
+//   return prisma.customer.update({ where: { id }, data: { isActive: false } });
+// }
 
 /** §4 — ADMIN-only blacklist toggle. Reason required when blacklisting; cleared when un-blacklisting. */
 export async function setBlacklist(id: string, input: BlacklistToggleInput, performedById: string) {
