@@ -55,5 +55,85 @@ export async function recalculateAllBalances(): Promise<{ customersProcessed: nu
       await recalculateBalances(customer.id, tx);
     }
   });
+  
   return { customersProcessed: customers.length };
+}
+import { ApiError } from "../middleware/errorHandler";
+import { writeAuditLog } from "./audit.service";
+import type { KhataEntryUpdateInput } from "@bardan/shared/validation/khata.schema";
+
+/**
+ * Edits a manual ledger entry (a recorded payment/correction). Entries
+ * generated automatically from an Order (type DEBIT with an orderId) are
+ * NOT editable here — they must be changed via the order itself, so the
+ * order total and the khata never drift apart. After the edit, every
+ * later entry for this customer is recalculated so runningBalance stays
+ * correct (§6.7/§6.8).
+ */
+export async function updateLedgerEntry(
+  entryId: string,
+  input: KhataEntryUpdateInput,
+  performedById: string
+) {
+  return prisma.$transaction(async (tx) => {
+    const entry = await tx.khataLedger.findUnique({ where: { id: entryId } });
+    if (!entry) throw new ApiError(404, "Ledger entry not found");
+    if (entry.orderId) {
+      throw new ApiError(
+        422,
+        "This entry is linked to an order and can't be edited from Khata. Edit the order instead."
+      );
+    }
+
+    const updated = await tx.khataLedger.update({
+      where: { id: entryId },
+      data: {
+        amount: input.amount,
+        date: new Date(input.date),
+        paymentMode: input.paymentMode,
+        referenceNo: input.referenceNo || null,
+        notes: input.notes || null,
+      },
+    });
+
+    await recalculateBalances(entry.customerId, tx);
+    await writeAuditLog(tx, {
+      action: "KHATA_ENTRY_EDITED",
+      entityType: "KhataLedger",
+      entityId: entryId,
+      performedById,
+      details: { before: { amount: Number(entry.amount), date: entry.date }, after: input },
+    });
+
+    return updated;
+  });
+}
+
+/**
+ * Deletes a manual ledger entry (same order-linked restriction as above),
+ * then recalculates the customer's running balances.
+ */
+export async function deleteLedgerEntry(entryId: string, performedById: string) {
+  return prisma.$transaction(async (tx) => {
+    const entry = await tx.khataLedger.findUnique({ where: { id: entryId } });
+    if (!entry) throw new ApiError(404, "Ledger entry not found");
+    if (entry.orderId) {
+      throw new ApiError(
+        422,
+        "This entry is linked to an order and can't be deleted from Khata. Cancel/edit the order instead."
+      );
+    }
+
+    await tx.khataLedger.delete({ where: { id: entryId } });
+    await recalculateBalances(entry.customerId, tx);
+    await writeAuditLog(tx, {
+      action: "KHATA_ENTRY_DELETED",
+      entityType: "KhataLedger",
+      entityId: entryId,
+      performedById,
+      details: { amount: Number(entry.amount), type: entry.type, date: entry.date },
+    });
+
+    return { customerId: entry.customerId };
+  });
 }
