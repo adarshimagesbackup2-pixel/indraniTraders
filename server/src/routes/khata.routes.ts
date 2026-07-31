@@ -101,5 +101,24 @@ router.get(
     });
   })
 );
+/** Edit a manual ledger entry (ADMIN only). */
+router.put(
+  "/entry/:entryId",
+  requireAdmin,
+  validateBody(khataEntryUpdateSchema),
+  asyncHandler(async (req, res) => {
+    const updated = await updateLedgerEntry(req.params.entryId, req.body, req.user!.userId);
+    res.json({ success: true, data: updated });
+  })
+);
 
+/** Delete a manual ledger entry (ADMIN only). */
+router.delete(
+  "/entry/:entryId",
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const result = await deleteLedgerEntry(req.params.entryId, req.user!.userId);
+    res.json({ success: true, data: result });
+  })
+);
 export default router;
