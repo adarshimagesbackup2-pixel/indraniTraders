@@ -41,13 +41,80 @@ function exportLedgerCsv(customerName: string, entries: LedgerEntry[]) {
   link.click();
   link.remove();
 }
+interface EditEntryModalProps {
+  entry: LedgerEntry | null;
+  customerId: string;
+  onClose: () => void;
+}
 
+function EditEntryModal({ entry, customerId, onClose }: EditEntryModalProps) {
+  const updateEntry = useUpdateLedgerEntry(customerId);
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
+    values: entry
+      ? {
+          amount: entry.amount,
+          date: entry.date.slice(0, 10),
+          referenceNo: entry.referenceNo ?? "",
+        }
+      : undefined,
+  });
+
+  if (!entry) return null;
+
+  const onSubmit = async (values: { amount: number; date: string; referenceNo: string }) => {
+    try {
+      await updateEntry.mutateAsync({
+        entryId: entry.id,
+        input: {
+          amount: Number(values.amount),
+          date: values.date,
+          referenceNo: values.referenceNo,
+        },
+      });
+      showToast.success("Entry updated");
+      onClose();
+    } catch (err) {
+      showToast.error(extractApiErrorMessage(err, "Could not update entry"));
+    }
+  };
+
+  return (
+    <Modal isOpen={!!entry} onClose={onClose} title="Edit Ledger Entry">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <Input label="Amount (₹)" type="number" step="0.01" error={errors.amount?.message as string | undefined} {...register("amount", { required: "Amount is required" })} />
+        <Input label="Date" type="date" error={errors.date?.message as string | undefined} {...register("date", { required: "Date is required" })} />
+        <Input label="Reference No (optional)" {...register("referenceNo")} />
+        <Button type="submit" isLoading={isSubmitting} className="w-full">
+          Save Changes
+        </Button>
+      </form>
+    </Modal>
+  );
+}
 export function CustomerLedgerPage() {
   const { customerId } = useParams<{ customerId: string }>();
   const navigate = useNavigate();
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const { user } = useAuth();
+const [editingEntry, setEditingEntry] = useState<LedgerEntry | null>(null);
+const updateEntry = useUpdateLedgerEntry(customerId);
+const deleteEntry = useDeleteLedgerEntry(customerId);
+
+const handleDeleteEntry = async (entry: LedgerEntry) => {
+  if (entry.order) {
+    showToast.error("This entry is linked to an order — edit the order instead.");
+    return;
+  }
+  if (!window.confirm("Delete this ledger entry? This cannot be undone.")) return;
+  try {
+    await deleteEntry.mutateAsync(entry.id);
+    showToast.success("Entry deleted");
+  } catch (err) {
+    showToast.error(extractApiErrorMessage(err, "Could not delete entry"));
+  }
+};
   const { data, isLoading, isError, refetch } = useCustomerLedger(customerId, from || undefined, to || undefined);
   const { data: settings } = useSettings();
   const { data: recentOrders } = useOrders({ customerId });
@@ -67,6 +134,32 @@ export function CustomerLedgerPage() {
     { header: "Debit", accessor: (r) => (r.type === "DEBIT" ? formatCurrency(r.amount) : "—") },
     { header: "Credit", accessor: (r) => (r.type === "CREDIT" ? formatCurrency(r.amount) : "—") },
     { header: "Balance", accessor: (r) => formatCurrency(r.runningBalance) },
+    ...(user?.role === "ADMIN"
+      ? [
+          {
+            header: "Actions",
+            accessor: (r: LedgerEntry) =>
+              r.order ? (
+                <span className="text-xs text-slate-400">Linked to order</span>
+              ) : (
+                <div className="flex gap-2">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setEditingEntry(r); }}
+                    className="text-xs text-primary hover:underline"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleDeleteEntry(r); }}
+                    className="text-xs text-danger hover:underline"
+                  >
+                    Delete
+                  </button>
+                </div>
+              ),
+          },
+        ]
+      : []),
   ];
 
   // §7.2 — repeat last order: prefill the New Order form via navigation state
@@ -203,6 +296,9 @@ export function CustomerLedgerPage() {
       {customerId && (
         <RecordPaymentModal isOpen={paymentModalOpen} onClose={() => setPaymentModalOpen(false)} customerId={customerId} />
       )}
+      {customerId && (
+  <EditEntryModal entry={editingEntry} customerId={customerId} onClose={() => setEditingEntry(null)} />
+)}
     </div>
   );
 }
