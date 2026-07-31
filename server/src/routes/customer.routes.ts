@@ -68,8 +68,10 @@ router.delete(
   "/:id",
   requireAdmin,
   asyncHandler(async (req, res) => {
-    await customerService.deleteCustomer(req.params.id);
-    res.json({ success: true, data: null });
+    const result = await customerService.deleteCustomer(req.params.id);
+    res.json({ success: true, data: result });
+    // await customerService.deleteCustomer(req.params.id);
+    // res.json({ success: true, data: null });
   })
 );
 
