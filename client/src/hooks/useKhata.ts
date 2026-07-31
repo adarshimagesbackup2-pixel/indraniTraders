@@ -68,7 +68,41 @@ export function useRecordPayment() {
     },
   });
 }
+export interface KhataEntryEditInput {
+  amount: number;
+  date: string;
+  paymentMode?: "CASH" | "UPI" | "BANK_TRANSFER" | "CHEQUE";
+  referenceNo?: string;
+  notes?: string;
+}
 
+export function useUpdateLedgerEntry(customerId: string | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ entryId, input }: { entryId: string; input: KhataEntryEditInput }) => {
+      const { data } = await api.put(`/khata/entry/${entryId}`, input);
+      return data.data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["khata"] });
+      if (customerId) qc.invalidateQueries({ queryKey: ["khata", customerId] });
+    },
+  });
+}
+
+export function useDeleteLedgerEntry(customerId: string | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (entryId: string) => {
+      const { data } = await api.delete(`/khata/entry/${entryId}`);
+      return data.data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["khata"] });
+      if (customerId) qc.invalidateQueries({ queryKey: ["khata", customerId] });
+    },
+  });
+}
 export async function downloadStatementPdf(customerId: string, name: string, from?: string, to?: string) {
   const response = await api.get(`/reports/khata/${customerId}/pdf`, {
     params: { from, to },
