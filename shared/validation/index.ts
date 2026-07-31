@@ -7,3 +7,4 @@ export * from "./payment.schema";
 export * from "./stock.schema";
 export * from "./settings.schema";
 export * from "./menuLabel.schema";
+export * from "./khata.schema";
