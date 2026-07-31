@@ -1,8 +1,15 @@
+// import { Router } from "express";
+// import { requireAuth } from "../middleware/auth";
+// import { asyncHandler, ApiError } from "../middleware/errorHandler";
+// import { prisma } from "../prisma";
+// import { getLatestRunningBalance } from "../services/khata.service";
 import { Router } from "express";
-import { requireAuth } from "../middleware/auth";
+import { requireAuth, requireAdmin } from "../middleware/auth";
+import { validateBody } from "../middleware/validate";
 import { asyncHandler, ApiError } from "../middleware/errorHandler";
 import { prisma } from "../prisma";
-import { getLatestRunningBalance } from "../services/khata.service";
+import { getLatestRunningBalance, updateLedgerEntry, deleteLedgerEntry } from "../services/khata.service";
+import { khataEntryUpdateSchema } from "@bardan/shared/validation/khata.schema";
 
 const router = Router();
 router.use(requireAuth);
