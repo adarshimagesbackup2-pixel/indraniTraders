@@ -231,8 +231,12 @@ export function CustomersTab() {
                 onClick={async (e) => {
                   e.stopPropagation();
                   try {
-                    await deleteCustomer.mutateAsync(c.id);
-                    showToast.success("Customer removed");
+                    const result = await deleteCustomer.mutateAsync(c.id);
+                    showToast.success(
+                      result.hadLedgerHistory
+                        ? "Customer has ledger history, so they were archived (not deleted) to keep your records intact."
+                        : "Customer archived"
+                    );
                   } catch (err) {
                     showToast.error(extractApiErrorMessage(err));
                   }
