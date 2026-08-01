@@ -87,8 +87,7 @@ export function StockRegisterPage() {
 
       <Card>
         <div className="mb-2 text-sm font-semibold">Bag Types</div>
-      <Card>
-        <div className="mb-2 text-sm font-semibold">Bag Types</div>
+     
         <Table
           columns={bagColumns}
           data={bags}
