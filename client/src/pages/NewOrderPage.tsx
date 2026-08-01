@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { printInvoiceWithFilename } from "../lib/printInvoice";
 import { useLocation } from "react-router-dom";
 import { MessageCircle, Printer } from "lucide-react";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
@@ -41,7 +42,10 @@ export function NewOrderPage() {
   const [creditBlocked, setCreditBlocked] = useState<string | null>(null);
   const [blacklistBlocked, setBlacklistBlocked] = useState<string | null>(null);
   const printRef = useRef<HTMLDivElement>(null);
-  const printFn = () => window.print();
+  const printFn = () => {
+    if (!createdOrder) return;
+    printInvoiceWithFilename(createdOrder.customer.name, createdOrder.challanNo, createdOrder.createdAt);
+  };
   const openWhatsApp = (order: Order) => {
     if (!order.customer.phone) return;
     const message = `Hello ${order.customer.name}, your invoice ${order.challanNo} for ₹${order.totalAmount.toFixed(2)} is ready. Thank you.`;
