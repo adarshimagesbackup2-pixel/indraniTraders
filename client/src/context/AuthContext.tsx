@@ -37,9 +37,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
     });
 
-   // Silently attempt a refresh on app load using the httpOnly cookie,
-    // then fetch the profile so the app can restore full session state
-    // (not just a token) after a page reload.
     (async () => {
       try {
         const { data } = await api.post("/auth/refresh");
@@ -52,6 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsLoading(false);
       }
     })();
+  }, []);
 
   const login = useCallback(async (phone: string, password: string, rememberMe: boolean) => {
     const { data } = await api.post("/auth/login", { phone, password, rememberMe });
