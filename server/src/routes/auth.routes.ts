@@ -1,6 +1,6 @@
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
-import { loginSchema, changePasswordSchema } from "@bardan/shared/validation/auth.schema";
+import { loginSchema, changePasswordSchema, changePhoneSchema } from "@bardan/shared/validation/auth.schema";
 import { validateBody } from "../middleware/validate";
 import { requireAuth } from "../middleware/auth";
 import { asyncHandler, ApiError } from "../middleware/errorHandler";
@@ -55,6 +55,7 @@ router.post("/logout", (req, res) => {
   res.clearCookie(REFRESH_COOKIE);
   res.json({ success: true, data: null });
 });
+
 router.get(
   "/me",
   requireAuth,
@@ -66,14 +67,22 @@ router.get(
 
 router.post(
   "/change-password",
-
-router.post(
-  "/change-password",
   requireAuth,
   validateBody(changePasswordSchema),
   asyncHandler(async (req, res) => {
     const { oldPassword, newPassword } = req.body;
     await authService.changePassword(req.user!.userId, oldPassword, newPassword);
+    res.json({ success: true, data: null });
+  })
+);
+
+router.post(
+  "/change-phone",
+  requireAuth,
+  validateBody(changePhoneSchema),
+  asyncHandler(async (req, res) => {
+    const { currentPassword, newPhone } = req.body;
+    await authService.changePhone(req.user!.userId, currentPassword, newPhone);
     res.json({ success: true, data: null });
   })
 );
