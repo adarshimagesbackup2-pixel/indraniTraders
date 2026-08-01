@@ -10,7 +10,7 @@ import { StockRegisterPage } from "./pages/StockRegisterPage";
 import { ChallanRegisterPage } from "./pages/ChallanRegisterPage";
 import { RemindersPage } from "./pages/RemindersPage";
 import { MastersPage } from "./pages/MastersPage";
-
+import { AssistantPage } from "./pages/AssistantPage";
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
   if (isLoading) {
@@ -30,6 +30,7 @@ export default function App() {
           <ProtectedRoute>
             <AppLayout>
               <Routes>
+                <Route path="/assistant" element={<AssistantPage />} />
                 <Route path="/" element={<DashboardPage />} />
                 <Route path="/orders/new" element={<NewOrderPage />} />
                 <Route path="/khata" element={<KhataRegisterPage />} />
