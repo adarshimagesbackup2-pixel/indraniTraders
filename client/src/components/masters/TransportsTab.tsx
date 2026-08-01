@@ -27,7 +27,7 @@ function TransportFormModal({
     formState: { errors, isSubmitting },
   } = useForm<TransportInput>({
     resolver: zodResolver(transportSchema),
-    defaultValues: editing
+    Values: editing
       ? { vehicleNo: editing.vehicleNo, driverName: editing.driverName, driverPhone: editing.driverPhone }
       : { vehicleNo: "", driverName: "", driverPhone: "" },
   });
