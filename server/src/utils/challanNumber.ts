@@ -1,35 +1,38 @@
 import { Prisma } from "@prisma/client";
+import { ApiError } from "../middleware/errorHandler";
 
 /**
- * Generates the next challan number in format CH-YYYYMMDD-XXXX where XXXX
- * is a zero-padded daily sequence that resets at midnight. Must be called
- * from *inside* the same Prisma $transaction that creates the Order, per
- * §6.1 / §6.5, so the count-then-insert is atomic under concurrent
- * submissions (Prisma transactions run against a single connection which
- * combined with the unique index on challanNo prevents duplicates).
+ * Auto-numbering (§2): you enter your own first invoice number manually,
+ * in whatever format you like. From then on, every auto-generated number
+ * is simply the highest purely-numeric invoice number used so far, plus
+ * one — no "CH-", no date prefix, just the next serial number.
+ *
+ * Older invoice numbers that aren't purely numeric (e.g. a legacy
+ * "CH-20260115-0001" format) are ignored for this calculation — they stay
+ * in your records as-is, they just don't count toward "the last number."
+ *
+ * Must be called from *inside* the same Prisma $transaction that creates
+ * the Order (per §6.1/§6.5), so two people creating an order at the same
+ * moment can't both land on the same next number.
  */
-export async function generateChallanNumber(
-  tx: Prisma.TransactionClient,
-  now: Date = new Date()
-): Promise<string> {
-  const startOfDay = new Date(now);
-  startOfDay.setHours(0, 0, 0, 0);
-  const endOfDay = new Date(now);
-  endOfDay.setHours(23, 59, 59, 999);
+export async function generateChallanNumber(tx: Prisma.TransactionClient): Promise<string> {
+  const existingOrders = await tx.order.findMany({ select: { challanNo: true } });
 
-  const countToday = await tx.order.count({
-    where: {
-      createdAt: {
-        gte: startOfDay,
-        lte: endOfDay,
-      },
-    },
-  });
+  const numericChallanNos = existingOrders
+    .map((o) => o.challanNo)
+    .filter((no) => /^\d+$/.test(no));
 
-  const sequence = String(countToday + 1).padStart(4, "0");
-  const datePart = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(
-    now.getDate()
-  ).padStart(2, "0")}`;
+  if (numericChallanNos.length === 0) {
+    throw new ApiError(
+      422,
+      "Enter your starting invoice number once — after that, new invoices will number automatically.",
+      { customChallanNo: "Enter a starting invoice number (e.g. 1001)" }
+    );
+  }
 
-  return `CH-${datePart}-${sequence}`;
+  const maxLength = Math.max(...numericChallanNos.map((no) => no.length));
+  const maxValue = Math.max(...numericChallanNos.map((no) => parseInt(no, 10)));
+  const next = maxValue + 1;
+
+  return String(next).padStart(maxLength, "0");
 }
