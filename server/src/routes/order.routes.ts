@@ -69,7 +69,13 @@ router.put(
     res.json({ success: true, data: order });
   })
 );
-
+router.post(
+  "/:id/dispatch",
+  asyncHandler(async (req, res) => {
+    const order = await orderService.markDispatched(req.params.id, req.user!.userId);
+    res.json({ success: true, data: order });
+  })
+);
 // §3 — ADMIN-only edit, with full transactional stock/ledger reversal
 router.put(
   "/:id",
