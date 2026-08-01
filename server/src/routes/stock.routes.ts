@@ -26,7 +26,13 @@ router.post(
     res.status(201).json({ success: true, data: logs });
   })
 );
-
+router.get(
+  "/godown-summary",
+  asyncHandler(async (req, res) => {
+    const summary = await stockService.getGodownBreakdown();
+    res.json({ success: true, data: summary });
+  })
+);
 router.get(
   "/audit-log",
   asyncHandler(async (req, res) => {
