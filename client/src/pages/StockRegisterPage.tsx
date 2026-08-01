@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useBags } from "../hooks/useBags";
-import { useStockAudit, useReorderSuggestion } from "../hooks/useStock";
+import { useStockAudit, useReorderSuggestion, useGodownSummary } from "../hooks/useStock";
 import { Table, type Column } from "../components/ui/Table";
 import { Badge } from "../components/ui/Badge";
 import { Card } from "../components/ui/Card";
@@ -24,7 +24,8 @@ export function StockRegisterPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [bulkModalOpen, setBulkModalOpen] = useState(false);
   const [selectedBagId, setSelectedBagId] = useState<string | undefined>();
-  const { data: auditData } = useStockAudit(selectedBagId);
+ const { data: auditData } = useStockAudit(selectedBagId);
+  const { data: godownData } = useGodownSummary();
 
   const bagColumns: Column<Bag>[] = [
     { header: "Bag Type", accessor: (b) => b.bagType },
@@ -65,7 +66,27 @@ export function StockRegisterPage() {
           <Button onClick={() => setModalOpen(true)}>+ Add Stock</Button>
         </div>
       </div>
+<Card>
+        <div className="mb-2 text-sm font-semibold">Godown Status by Bag Type</div>
+        <p className="mb-2 text-xs text-slate-500">
+          Ordered but still on your premises (In-Godown) vs already sent out (Out-Godown).
+        </p>
+        <Table
+          columns={[
+            { header: "Bag Type", accessor: (r) => r.bagType },
+            { header: "In-Godown (awaiting dispatch)", accessor: (r) => <span className="text-amber-600">{r.inGodown}</span> },
+            { header: "Out-Godown (dispatched)", accessor: (r) => <span className="text-success">{r.outGodown}</span> },
+          ]}
+          data={godownData}
+          isLoading={false}
+          isError={false}
+          rowKey={(r) => r.bagTypeId}
+          emptyMessage="No active orders yet"
+        />
+      </Card>
 
+      <Card>
+        <div className="mb-2 text-sm font-semibold">Bag Types</div>
       <Card>
         <div className="mb-2 text-sm font-semibold">Bag Types</div>
         <Table
