@@ -9,18 +9,36 @@ async function buildBusinessSnapshot() {
   const ninetyDaysAgo = new Date();
   ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
 
-  const [customers, bags, recentOrders, recentPayments] = await Promise.all([
-    prisma.customer.findMany({ where: { isActive: true } }),
-    prisma.bagMaster.findMany({ where: { isActive: true } }),
-    prisma.order.findMany({
-      where: { status: "ACTIVE", createdAt: { gte: ninetyDaysAgo } },
-      select: { totalAmount: true, createdAt: true },
-    }),
+ const [customers, bags, recentOrders, recentPayments, sixMonthOrders, sixMonthPayments, lifetimeByCustomer, itemizedRecentOrders] =
+    await Promise.all([
+      prisma.customer.findMany({ where: { isActive: true } }),
+      prisma.bagMaster.findMany({ where: { isActive: true } }),
+      
     prisma.khataLedger.findMany({
       where: { type: "CREDIT", date: { gte: ninetyDaysAgo } },
       select: { amount: true, date: true },
     }),
   ]);
+  prisma.order.groupBy({
+        by: ["customerId"],
+        where: { status: "ACTIVE" },
+        _sum: { totalAmount: true },
+        _count: { _all: true },
+      }),
+      prisma.order.findMany({
+        where: { createdAt: { gte: ninetyDaysAgo } },
+        select: {
+          challanNo: true,
+          createdAt: true,
+          totalAmount: true,
+          status: true,
+          dispatchStatus: true,
+          customer: { select: { name: true } },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 300,
+      }),
+    ]);
 
   const balances = await Promise.all(customers.map((c) => getLatestRunningBalance(c.id)));
 
@@ -37,7 +55,19 @@ async function buildBusinessSnapshot() {
     .map((b) => ({ bagType: b.bagType, currentStock: b.currentStock, threshold: b.lowStockThreshold }));
 
   const blacklistedCustomers = customers.filter((c) => c.isBlacklisted).map((c) => c.name);
+const recentInvoiceList = itemizedRecentOrders.map((o) => ({
+    invoiceNo: o.challanNo,
+    date: o.createdAt.toISOString().slice(0, 10),
+    customer: o.customer.name,
+    amountRupees: Number(o.totalAmount),
+    status: o.status,
+    dispatchStatus: o.dispatchStatus,
+  }));
 
+  return {
+    asOf: now.toISOString(),
+    recentInvoicesLast90Days: recentInvoiceList,
+    totalActiveCustomers: customers.length,
   return {
     asOf: new Date().toISOString(),
     totalActiveCustomers: customers.length,
