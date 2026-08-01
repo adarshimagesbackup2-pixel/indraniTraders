@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from "react";
-import { Sparkles, Download, Mic, Square, Volume2, VolumeX } from "lucide-react";
+import { Sparkles, Download, Mic, Square, Volume2, VolumeX, FileDown, MessageCircle } from "lucide-react";
 import { useAskAssistant } from "../hooks/useAssistant";
+import { useSettings } from "../hooks/useSettings";
+import { printPageWithFilename } from "../lib/printInvoice";
 import { Card } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
 import { showToast, extractApiErrorMessage } from "../components/ui/Toast";
@@ -15,6 +17,7 @@ const SAMPLE_QUESTIONS = [
 interface HistoryItem {
   question: string;
   answer: string;
+  askedAt: Date;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -26,7 +29,9 @@ export function AssistantPage() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [isListening, setIsListening] = useState(false);
   const [speakEnabled, setSpeakEnabled] = useState(false);
+  const [printingItem, setPrintingItem] = useState<HistoryItem | null>(null);
   const ask = useAskAssistant();
+  const { data: settings } = useSettings();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
 
@@ -36,7 +41,7 @@ export function AssistantPage() {
     if (!q.trim()) return;
     try {
       const answer = await ask.mutateAsync(q);
-      setHistory((h) => [...h, { question: q, answer }]);
+      setHistory((h) => [...h, { question: q, answer, askedAt: new Date() }]);
       setQuestion("");
       if (speakEnabled && "speechSynthesis" in window) {
         const utterance = new SpeechSynthesisUtterance(answer);
@@ -91,7 +96,7 @@ export function AssistantPage() {
     };
   }, []);
 
-  const downloadAnswer = (item: HistoryItem) => {
+  const downloadAsText = (item: HistoryItem) => {
     const blob = new Blob([`Q: ${item.question}\n\n${item.answer}`], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -101,9 +106,24 @@ export function AssistantPage() {
     URL.revokeObjectURL(url);
   };
 
+  const downloadAsPdf = (item: HistoryItem) => {
+    setPrintingItem(item);
+    setTimeout(() => {
+      const datePart = item.askedAt.toISOString().slice(0, 10);
+      printPageWithFilename(`AI-Report-${datePart}`);
+      setPrintingItem(null);
+    }, 50);
+  };
+
+  const sendToWhatsApp = (item: HistoryItem) => {
+    const message = `${item.question}\n\n${item.answer}`;
+    const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(url, "_blank");
+  };
+
   return (
     <div className="mx-auto max-w-2xl space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="no-print flex items-center justify-between">
         <h1 className="flex items-center gap-2 text-xl font-bold">
           <Sparkles className="h-5 w-5 text-primary" /> AI Assistant
         </h1>
@@ -115,12 +135,12 @@ export function AssistantPage() {
           {speakEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
         </button>
       </div>
-      <p className="text-sm text-slate-500">
+      <p className="no-print text-sm text-slate-500">
         Ask about your customers, orders, collections, or stock — type, or tap the mic to speak.
       </p>
 
       {history.length === 0 && (
-        <div className="flex flex-wrap gap-2">
+        <div className="no-print flex flex-wrap gap-2">
           {SAMPLE_QUESTIONS.map((q) => (
             <button
               key={q}
@@ -133,17 +153,22 @@ export function AssistantPage() {
         </div>
       )}
 
-      <div className="space-y-3">
+      <div className="no-print space-y-3">
         {history.map((item, i) => (
           <Card key={i}>
             <div className="mb-2 text-sm font-semibold text-primary">You asked: {item.question}</div>
             <div className="whitespace-pre-wrap text-sm">{item.answer}</div>
-            <button
-              onClick={() => downloadAnswer(item)}
-              className="mt-3 flex items-center gap-1 text-xs text-slate-500 hover:underline"
-            >
-              <Download className="h-3 w-3" /> Download as text
-            </button>
+            <div className="mt-3 flex flex-wrap gap-3">
+              <button onClick={() => downloadAsPdf(item)} className="flex items-center gap-1 text-xs text-slate-500 hover:underline">
+                <FileDown className="h-3 w-3" /> Download as PDF
+              </button>
+              <button onClick={() => downloadAsText(item)} className="flex items-center gap-1 text-xs text-slate-500 hover:underline">
+                <Download className="h-3 w-3" /> Download as text
+              </button>
+              <button onClick={() => sendToWhatsApp(item)} className="flex items-center gap-1 text-xs text-slate-500 hover:underline">
+                <MessageCircle className="h-3 w-3" /> Send via WhatsApp
+              </button>
+            </div>
           </Card>
         ))}
       </div>
@@ -153,7 +178,7 @@ export function AssistantPage() {
           e.preventDefault();
           submit(question);
         }}
-        className="flex gap-2"
+        className="no-print flex gap-2"
       >
         <textarea
           value={question}
@@ -176,6 +201,17 @@ export function AssistantPage() {
           Ask
         </Button>
       </form>
+
+      {printingItem && (
+        <div className="print-only">
+          <div className="mb-4 border-b border-black pb-2">
+            <div className="text-lg font-bold">{settings?.businessName ?? "Business Report"}</div>
+            <div className="text-xs">Generated by AI Assistant on {printingItem.askedAt.toLocaleString("en-IN")}</div>
+          </div>
+          <div className="mb-2 text-sm font-semibold">Q: {printingItem.question}</div>
+          <div className="whitespace-pre-wrap text-sm">{printingItem.answer}</div>
+        </div>
+      )}
     </div>
   );
 }
