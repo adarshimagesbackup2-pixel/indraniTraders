@@ -153,13 +153,12 @@ export function ChallanRegisterPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="no-print flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-bold">Invoices</h1>
         <Input placeholder="Search by invoice no. or customer…" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs" />
       </div>
 
-      <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
-        <Table
+      <div className="no-print rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">       <Table
           columns={columns}
           data={data?.data}
           isLoading={isLoading}
