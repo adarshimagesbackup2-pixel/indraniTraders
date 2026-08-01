@@ -31,7 +31,7 @@ function CustomerFormModal({ isOpen, onClose, editing }: { isOpen: boolean; onCl
     formState: { errors, isSubmitting },
   } = useForm<CustomerInput>({
     resolver: zodResolver(customerSchema),
-    defaultValues: editing
+    values: editing
       ? {
           name: editing.name,
           phone: editing.phone,
