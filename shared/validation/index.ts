@@ -8,3 +8,4 @@ export * from "./stock.schema";
 export * from "./settings.schema";
 export * from "./menuLabel.schema";
 export * from "./khata.schema";
+export * from "./assistant.schema";
