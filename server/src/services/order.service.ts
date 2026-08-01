@@ -557,7 +557,12 @@ export async function cancelOrder(orderId: string, cancelReason: string, cancell
       performedById: cancelledById,
       details: { challanNo: existing.challanNo, cancelReason },
     });
-    export async function markDispatched(orderId: string, userId: string) {
+
+    return updated;
+  });
+}
+
+export async function markDispatched(orderId: string, userId: string) {
   const order = await prisma.order.findUnique({ where: { id: orderId } });
   if (!order) throw new ApiError(404, "Order not found");
   if (order.status === "CANCELLED") {
@@ -574,9 +579,5 @@ export async function cancelOrder(orderId: string, cancelReason: string, cancell
       dispatchedAt: new Date(),
       dispatchedById: userId,
     },
-  });
-}
-
-    return updated;
   });
 }
