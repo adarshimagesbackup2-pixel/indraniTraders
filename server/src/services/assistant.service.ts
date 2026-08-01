@@ -3,7 +3,7 @@ import { ApiError } from "../middleware/errorHandler";
 import { logger } from "../utils/logger";
 import { getLatestRunningBalance } from "./khata.service";
 
-const GEMINI_MODEL = "gemini-2.0-flash";
+const GEMINI_MODEL = "gemini-3.6-flash";
 
 async function buildBusinessSnapshot() {
   const ninetyDaysAgo = new Date();
