@@ -31,7 +31,7 @@ export function DashboardPage() {
         <DayBookCard />
       </div>
 
-      <div className="no-print grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="no-print grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Card>
           <div className="text-sm text-slate-500">Total Outstanding</div>
           <div className="mt-1 text-2xl font-bold text-danger">{formatCurrency(data.totalOutstanding)}</div>
@@ -42,12 +42,7 @@ export function DashboardPage() {
           <div className="text-xs text-slate-500">{formatCurrency(data.todaysOrdersValue)}</div>
         </Card>
         <Card>
-          <div className="text-sm text-slate-500">This Month's Collections</div>
-          <div className="mt-1 text-2xl font-bold text-success">{formatCurrency(data.monthCollections)}</div>
-        </Card>
-        <Card>
-          <div className="text-sm text-slate-500">Low Stock Alerts</div>
-          <div className="mt-1 text-2xl font-bold text-warning">{data.lowStockCount}</div>
+          <div className="text-sm text-slate-500">Low Stock Alerts</div>      <div className="mt-1 text-2xl font-bold text-warning">{data.lowStockCount}</div>
           <Link to="/stock" className="text-xs text-primary hover:underline">
             View Stock Register
           </Link>
