@@ -139,6 +139,16 @@ export function useCancelOrder() {
     },
   });
 }
+export function useMarkDispatched() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (orderId: string) => {
+      const { data } = await api.post(`/orders/${orderId}/dispatch`);
+      return data.data as Order;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["orders"] }),
+  });
+}
 
 export async function downloadEwayJson(orderId: string, challanNo: string) {
   const response = await api.get(`/orders/${orderId}/json`, { responseType: "blob" });
