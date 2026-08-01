@@ -25,5 +25,11 @@ export const changePasswordSchema = z
     path: ["confirmPassword"],
   });
 
+export const changePhoneSchema = z.object({
+  currentPassword: z.string().min(1, "Enter your password to confirm"),
+  newPhone: phoneSchema,
+});
+
 export type LoginInput = z.infer<typeof loginSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+export type ChangePhoneInput = z.infer<typeof changePhoneSchema>;
