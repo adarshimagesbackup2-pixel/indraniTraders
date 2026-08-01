@@ -67,9 +67,9 @@ enum TransportationReason {
   OTHERS
 }
 
-enum OrderStatus {
-  ACTIVE
-  CANCELLED
+enum DispatchStatus {
+  IN_GODOWN
+  OUT_GODOWN
 }
 
 model User {
@@ -171,6 +171,12 @@ model Order {
   transDistanceKm      Int?
 
   status        OrderStatus @default(ACTIVE)
+
+  // In-godown = billed but goods haven't left the warehouse yet.
+  // Out-godown = goods have been dispatched to the customer.
+  dispatchStatus DispatchStatus @default(IN_GODOWN)
+  dispatchedAt   DateTime?
+  dispatchedById String?
   editedAt      DateTime?
   editedById    String?
   editReason    String?
