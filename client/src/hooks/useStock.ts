@@ -65,3 +65,19 @@ export function useReorderSuggestion(bagTypeId: string | undefined) {
     enabled: !!bagTypeId,
   });
 }
+export interface GodownBreakdownRow {
+  bagTypeId: string;
+  bagType: string;
+  inGodown: number;
+  outGodown: number;
+}
+
+export function useGodownSummary() {
+  return useQuery({
+    queryKey: ["godownSummary"],
+    queryFn: async () => {
+      const { data } = await api.get("/stock/godown-summary");
+      return data.data as GodownBreakdownRow[];
+    },
+  });
+}
