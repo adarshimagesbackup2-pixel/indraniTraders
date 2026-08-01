@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { printInvoiceWithFilename } from "../lib/printInvoice";
 import { MessageCircle, Printer } from "lucide-react";
 import { useOrders, useSetEwayBillNo, downloadEwayJson, type Order } from "../hooks/useOrders";
 import { useAuth } from "../context/AuthContext";
@@ -147,7 +148,7 @@ export function ChallanRegisterPage() {
 
   const printInvoice = () => {
     if (invoiceOrder) {
-      window.print();
+      printInvoiceWithFilename(invoiceOrder.customer.name, invoiceOrder.challanNo, invoiceOrder.createdAt);
     }
   };
 
