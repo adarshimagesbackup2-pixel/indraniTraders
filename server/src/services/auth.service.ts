@@ -67,3 +67,13 @@ export async function changePassword(userId: string, oldPassword: string, newPas
     data: { passwordHash, mustChangePassword: false },
   });
 }
+export async function getCurrentUser(userId: string) {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new ApiError(401, "Session is no longer valid");
+  return {
+    id: user.id,
+    name: user.name,
+    role: user.role,
+    mustChangePassword: user.mustChangePassword,
+  };
+}
