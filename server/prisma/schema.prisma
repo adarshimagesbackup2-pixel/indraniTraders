@@ -67,6 +67,11 @@ enum TransportationReason {
   OTHERS
 }
 
+enum OrderStatus {
+  ACTIVE
+  CANCELLED
+}
+
 enum DispatchStatus {
   IN_GODOWN
   OUT_GODOWN
