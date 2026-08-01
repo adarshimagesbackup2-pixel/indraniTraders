@@ -18,6 +18,7 @@ import { LowStockBell } from "../components/LowStockBell";
 import { ChangePasswordModal } from "../components/ChangePasswordModal";
 import { GlobalSearchBar } from "../components/GlobalSearchBar";
 import { useMenuLabels, resolveMenuLabel } from "../hooks/useMenuLabels";
+import { Sparkles } from "lucide-react";
 
 const NAV_ITEMS = [
   { to: "/", key: "dashboard", icon: LayoutDashboard },
@@ -27,6 +28,7 @@ const NAV_ITEMS = [
   { to: "/challans", key: "challans", icon: Truck },
   { to: "/reminders", key: "reminders", icon: BellIcon },
   { to: "/masters", key: "masters", icon: Settings },
+ { to: "/assistant", key: "assistant", icon: Sparkles },
 ];
 
 const BOTTOM_BAR_ITEMS = [
@@ -37,6 +39,7 @@ const BOTTOM_BAR_ITEMS = [
   { to: "/challans", key: "challans", icon: Truck },
   { to: "/reminders", key: "reminders", icon: BellIcon },
   { to: "/masters", key: "masters", icon: Settings },
+  { to: "/assistant", key: "assistant", icon: Sparkles },
 ];
 
 function LiveClock() {
