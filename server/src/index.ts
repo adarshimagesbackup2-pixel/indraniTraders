@@ -9,7 +9,7 @@ import { startMonthlyReminderCron } from "./jobs/monthlyReminder.cron";
 import { startDailyBackupCron } from "./jobs/dailyBackup.cron";
 import { logger } from "./utils/logger";
 import { writeEmergencyBackupSnapshot } from "./jobs/dailyBackup.cron";
-
+import assistantRoutes from "./routes/assistant.routes";
 import authRoutes from "./routes/auth.routes";
 import customerRoutes from "./routes/customer.routes";
 import bagRoutes from "./routes/bag.routes";
@@ -70,6 +70,7 @@ app.use((req, _res, next) => {
 app.get("/api/health", (_req, res) => res.json({ success: true, data: { status: "ok" } }));
 
 app.use("/api/auth", authRoutes);
+app.use("/api/assistant", assistantRoutes);
 app.use("/api/customers", customerRoutes);
 app.use("/api/bags", bagRoutes);
 app.use("/api/transports", transportRoutes);
