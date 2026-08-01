@@ -557,6 +557,25 @@ export async function cancelOrder(orderId: string, cancelReason: string, cancell
       performedById: cancelledById,
       details: { challanNo: existing.challanNo, cancelReason },
     });
+    export async function markDispatched(orderId: string, userId: string) {
+  const order = await prisma.order.findUnique({ where: { id: orderId } });
+  if (!order) throw new ApiError(404, "Order not found");
+  if (order.status === "CANCELLED") {
+    throw new ApiError(422, "Cannot dispatch a cancelled order");
+  }
+  if (order.dispatchStatus === "OUT_GODOWN") {
+    throw new ApiError(422, "This order is already marked as dispatched");
+  }
+
+  return prisma.order.update({
+    where: { id: orderId },
+    data: {
+      dispatchStatus: "OUT_GODOWN",
+      dispatchedAt: new Date(),
+      dispatchedById: userId,
+    },
+  });
+}
 
     return updated;
   });
