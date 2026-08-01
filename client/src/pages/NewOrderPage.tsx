@@ -165,12 +165,11 @@ export function NewOrderPage() {
     }
   };
 
-  return (
+ return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <h1 className="text-xl font-bold">New Order</h1>
+      <h1 className="no-print text-xl font-bold">New Order</h1>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <form onSubmit={handleSubmit(onSubmit)} className="no-print space-y-4">       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Controller
             name="customerId"
             control={control}
