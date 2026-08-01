@@ -85,3 +85,35 @@ export async function listStockAudit(filters: StockAuditFilters) {
 
   return { data: logs, total, page, pageSize };
 }
+/**
+ * Per bag type, how much quantity from ACTIVE (non-cancelled) orders is
+ * still sitting in the godown (billed but not yet dispatched) vs already
+ * sent out. Complements currentStock, which already excludes both — this
+ * shows what's physically still on your premises right now.
+ */
+export async function getGodownBreakdown() {
+  const items = await prisma.orderItem.findMany({
+    where: { order: { status: "ACTIVE" } },
+    select: {
+      bagTypeId: true,
+      quantity: true,
+      bagType: { select: { bagType: true } },
+      order: { select: { dispatchStatus: true } },
+    },
+  });
+
+  const map = new Map<string, { bagTypeId: string; bagType: string; inGodown: number; outGodown: number }>();
+  for (const item of items) {
+    if (!map.has(item.bagTypeId)) {
+      map.set(item.bagTypeId, { bagTypeId: item.bagTypeId, bagType: item.bagType.bagType, inGodown: 0, outGodown: 0 });
+    }
+    const entry = map.get(item.bagTypeId)!;
+    if (item.order.dispatchStatus === "IN_GODOWN") {
+      entry.inGodown += item.quantity;
+    } else {
+      entry.outGodown += item.quantity;
+    }
+  }
+
+  return Array.from(map.values());
+}
