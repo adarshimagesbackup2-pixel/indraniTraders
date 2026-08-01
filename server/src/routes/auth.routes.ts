@@ -26,12 +26,15 @@ router.post(
   asyncHandler(async (req, res) => {
     const { phone, password, rememberMe } = req.body;
     const result = await authService.login(phone, password, rememberMe);
-
-    res.cookie(REFRESH_COOKIE, result.refreshToken, {
+res.cookie(REFRESH_COOKIE, result.refreshToken, {
       httpOnly: true,
       secure: isProd,
       sameSite: "strict",
-      maxAge: (rememberMe ? 90 : 30) * 24 * 60 * 60 * 1000,
+      // Checked: a real persistent cookie that survives closing the browser.
+      // Unchecked: no maxAge at all — a session cookie the browser deletes
+      // on its own when fully closed, so the checkbox actually does
+      // something you can see right away instead of only after weeks.
+      ...(rememberMe ? { maxAge: 90 * 24 * 60 * 60 * 1000 } : {}),
     });
 
     res.json({
