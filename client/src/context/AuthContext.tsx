@@ -37,25 +37,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
     });
 
-    // Silently attempt a refresh on app load using the httpOnly cookie.
+   // Silently attempt a refresh on app load using the httpOnly cookie,
+    // then fetch the profile so the app can restore full session state
+    // (not just a token) after a page reload.
     (async () => {
       try {
         const { data } = await api.post("/auth/refresh");
         setAccessToken(data.data.accessToken);
-        // We don't have the user profile from /refresh alone in this API
-        // contract, so a lightweight approach: keep user null until the
-        // next successful /auth/login. If a persisted session should show
-        // the shell immediately, the app can be extended with a /auth/me
-        // endpoint; for now, treat a successful refresh as "logged out of
-        // UI state but token valid" which safely falls back to the login
-        // page if user is required for route rendering.
+        const me = await api.get("/auth/me");
+        setUser(me.data.data.user);
       } catch {
         // no valid session
       } finally {
         setIsLoading(false);
       }
     })();
-  }, []);
 
   const login = useCallback(async (phone: string, password: string, rememberMe: boolean) => {
     const { data } = await api.post("/auth/login", { phone, password, rememberMe });
