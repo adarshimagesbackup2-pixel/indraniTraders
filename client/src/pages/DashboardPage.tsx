@@ -20,7 +20,7 @@ export function DashboardPage() {
 
   const chartData = data.last30DaysOrders.reduce<Record<string, number>>((acc, o) => {
     const day = formatDate(o.createdAt);
-    acc[day] = (acc[day] ?? 0) + o.totalAmount;
+    acc[day] = (acc[day] ?? 0) + 1;
     return acc;
   }, {});
   const lineData = Object.entries(chartData).map(([day, total]) => ({ day, total }));
