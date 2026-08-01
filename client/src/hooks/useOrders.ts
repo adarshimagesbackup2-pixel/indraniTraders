@@ -38,7 +38,9 @@ export interface Order {
   transportDocNo: string | null;
   transportDocDate: string | null;
   transDistanceKm: number | null;
-  status: "ACTIVE" | "CANCELLED";
+ status: "ACTIVE" | "CANCELLED";
+  dispatchStatus: "IN_GODOWN" | "OUT_GODOWN";
+  dispatchedAt: string | null;
   editedAt: string | null;
   editedById: string | null;
   editReason: string | null;
