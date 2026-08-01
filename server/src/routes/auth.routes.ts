@@ -55,6 +55,17 @@ router.post("/logout", (req, res) => {
   res.clearCookie(REFRESH_COOKIE);
   res.json({ success: true, data: null });
 });
+router.get(
+  "/me",
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const user = await authService.getCurrentUser(req.user!.userId);
+    res.json({ success: true, data: { user } });
+  })
+);
+
+router.post(
+  "/change-password",
 
 router.post(
   "/change-password",
