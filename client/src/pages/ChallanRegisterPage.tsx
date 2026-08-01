@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { printInvoiceWithFilename } from "../lib/printInvoice";
 import { MessageCircle, Printer } from "lucide-react";
-import { useOrders, useSetEwayBillNo, downloadEwayJson, type Order } from "../hooks/useOrders";
+import { useOrders, useSetEwayBillNo, useMarkDispatched, downloadEwayJson, type Order } from "../hooks/useOrders";
 import { useAuth } from "../context/AuthContext";
 import { Table, type Column } from "../components/ui/Table";
 import { Badge } from "../components/ui/Badge";
@@ -25,7 +25,7 @@ export function ChallanRegisterPage() {
   const [cancellingOrder, setCancellingOrder] = useState<Order | null>(null);
   const { data, isLoading, isError, refetch } = useOrders({ search });
   const { data: settings } = useSettings();
-  const setEwayBillNo = useSetEwayBillNo();
+  const setEwayBillNo = useSetEwayBillNo();   const markDispatched = useMarkDispatched();
   const { user } = useAuth();
   const isAdmin = user?.role === "ADMIN";
   const [invoiceOrder, setInvoiceOrder] = useState<Order | null>(null);
@@ -50,6 +50,28 @@ export function ChallanRegisterPage() {
     { header: "Date", accessor: (o) => formatDate(o.createdAt) },
     { header: "Customer", accessor: (o) => o.customer.name },
     { header: "Vehicle", accessor: (o) => o.transport.vehicleNo },
+    {
+      header: "Godown Status",
+      accessor: (o) =>
+        o.dispatchStatus === "OUT_GODOWN" ? (
+          <Badge color="green">Out-Godown</Badge>
+        ) : (
+          <div className="flex items-center gap-2">
+            <Badge color="amber">In-Godown</Badge>
+            {o.status !== "CANCELLED" && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleMarkDispatched(o);
+                }}
+                className="text-xs text-primary hover:underline"
+              >
+                Mark Dispatched
+              </button>
+            )}
+          </div>
+        ),
+    },
     { header: "Total", accessor: (o) => formatCurrency(o.totalAmount) },
     {
       header: "E-Way Bill",
@@ -144,6 +166,15 @@ export function ChallanRegisterPage() {
     const message = `Hello ${order.customer.name}, your invoice ${order.challanNo} for ₹${order.totalAmount.toFixed(2)} is ready. Thank you.`;
     const url = `https://wa.me/91${order.customer.phone}?text=${encodeURIComponent(message)}`;
     window.open(url, "_blank");
+  };
+  const handleMarkDispatched = async (order: Order) => {
+    if (!window.confirm(`Mark invoice ${order.challanNo} as dispatched (goods left the godown)?`)) return;
+    try {
+      await markDispatched.mutateAsync(order.id);
+      showToast.success("Marked as dispatched");
+    } catch (err) {
+      showToast.error(extractApiErrorMessage(err, "Could not update dispatch status"));
+    }
   };
 
   const printInvoice = () => {
