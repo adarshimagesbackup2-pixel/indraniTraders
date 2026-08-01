@@ -77,3 +77,17 @@ export async function getCurrentUser(userId: string) {
     mustChangePassword: user.mustChangePassword,
   };
 }
+export async function changePhone(userId: string, currentPassword: string, newPhone: string) {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new ApiError(404, "User not found");
+
+  const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+  if (!valid) throw new ApiError(422, "Password is incorrect");
+
+  const clash = await prisma.user.findUnique({ where: { phone: newPhone } });
+  if (clash && clash.id !== userId) {
+    throw new ApiError(422, "This phone number is already in use", { newPhone: "Already in use" });
+  }
+
+  await prisma.user.update({ where: { id: userId }, data: { phone: newPhone } });
+}
