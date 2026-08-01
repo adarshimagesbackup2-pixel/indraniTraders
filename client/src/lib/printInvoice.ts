@@ -25,3 +25,17 @@ export function printInvoiceWithFilename(customerName: string, invoiceNo: string
 
   window.print();
 }
+/** Generic version of the invoice print trick, for any printable content
+ * (not just invoices) — e.g. AI Assistant reports. */
+export function printPageWithFilename(filename: string) {
+  const originalTitle = document.title;
+  document.title = filename;
+
+  const restoreTitle = () => {
+    document.title = originalTitle;
+    window.removeEventListener("afterprint", restoreTitle);
+  };
+  window.addEventListener("afterprint", restoreTitle);
+
+  window.print();
+}
