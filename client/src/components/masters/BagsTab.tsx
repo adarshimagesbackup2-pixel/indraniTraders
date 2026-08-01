@@ -19,7 +19,7 @@ function BagFormModal({ isOpen, onClose, editing }: { isOpen: boolean; onClose: 
     formState: { errors, isSubmitting },
   } = useForm<BagCreateInput>({
     resolver: zodResolver(bagCreateSchema),
-    Values: editing
+    values: editing
       ? {
           bagType: editing.bagType,
           defaultRate: editing.defaultRate,
