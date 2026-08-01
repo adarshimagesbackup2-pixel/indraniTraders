@@ -29,7 +29,7 @@ function BagFormModal({ isOpen, onClose, editing }: { isOpen: boolean; onClose: 
           gstRate: editing.gstRate,
           unitOfMeasure: editing.unitOfMeasure,
         }
-      : { bagType: "", defaultRate: undefined, currentStock: 0, lowStockThreshold: 2000, hsnCode: "6305", gstRate: 5, unitOfMeasure: "BAG" },
+      : { bagType: "", defaultRate: 0, currentStock: 0, lowStockThreshold: 2000, hsnCode: "6305", gstRate: 5, unitOfMeasure: "BAG" },
   });
 
   const onSubmit = async (values: BagCreateInput) => {
