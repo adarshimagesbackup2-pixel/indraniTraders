@@ -61,16 +61,17 @@ export async function askAssistant(question: string): Promise<string> {
 
   const snapshot = await buildBusinessSnapshot();
 
-  const prompt = `You are a helpful business assistant for an Indian onion-bag (bardan) trading business.
+ const prompt = `You are a helpful business assistant for an Indian onion-bag (bardan) trading business.
 Answer the owner's question using ONLY the JSON data below — never invent numbers. Amounts are in Indian Rupees (₹).
 If the question needs data that isn't in the snapshot, say so clearly instead of guessing.
-Keep answers concise and practical. If asked for a "report" or "summary", format it with short headings and bullet points.
+Keep answers concise and practical. If asked for a "report" or "summary", structure it with short section titles and a line break between each point.
+
+IMPORTANT — formatting: Reply in PLAIN TEXT only. Do NOT use Markdown syntax of any kind — no asterisks for bold/bullets (**, *), no pound signs for headings (#), no dashes as bullets, no backticks. For a list, just put each item on its own line, optionally with a number like "1." — nothing else.
 
 DATA SNAPSHOT (as of ${snapshot.asOf}):
 ${JSON.stringify(snapshot)}
 
 QUESTION: ${question}`;
-
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 25000);
 
