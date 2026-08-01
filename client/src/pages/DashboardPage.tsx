@@ -56,7 +56,7 @@ export function DashboardPage() {
             <LineChart data={lineData}>
               <XAxis dataKey="day" tick={{ fontSize: 10 }} interval={Math.ceil(lineData.length / 6)} />
               <YAxis tick={{ fontSize: 10 }} />
-              <Tooltip formatter={(v: number) => formatCurrency(v)} />
+              <Tooltip formatter={(v: number) => [`${v} order${v === 1 ? "" : "s"}`, "Orders"]} />
               <Line type="monotone" dataKey="total" stroke="#1F6F3A" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
